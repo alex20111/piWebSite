@@ -1,0 +1,26 @@
+
+
+
+Build-Self contained webserver.xml:
+	This will build the project with a self contained web server included.
+	You will need to start the project as follow.
+	Edit the WebConfig.ini and modify any parameters that you need.
+	Edit run.bat or run.sh to include the path for the webserver and java.
+	run.bat for windows
+	run.sh for raspi	 
+
+Build - War.xml
+	Build the project as a war file to be deployed into a web container (like jetty).
+	
+	
+If you want the project to be secured behind a logging at startup, then: (user must log-in then information)
+	for selfContained: 
+		- set to true the FORCE-LOGIN in the webconfig.ini
+	for war:
+		un-comment loginOptions in startupmanager.java and set it as follow: loginOptions = "mustLogin";
+		
+If you want the project to let you login after connecting to the page(basically you can browse as a guest, then log-in if you want more options)
+	for selfContained: 
+		- set to "FALSE" the FORCE-LOGIN in the webconfig.ini
+	for war:
+		un-comment loginOptions in startupmanager.java and set it as follow: loginOptions = "loginAfter";

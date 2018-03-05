@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN" 
+   "http://struts.apache.org/dtds/struts-2.0.dtd"> 
+   
+  <struts>  
+    <constant name="struts.devMode" value="false" />  
+    
+    <constant name="struts.multipart.maxSize" value="20000000" />
+    <!--
+		Enable/Disable Dynamic Method Invocation.
+		Struts has it on by default, but disable it due to security concerns.
+	-->
+	<constant name="struts.enable.DynamicMethodInvocation" value="false" />
+     <!--
+		Enable/Disable Mapper Action Prefix.
+		Struts has it off by default, but enable it for the s:submit button.
+	-->
+	<constant name="struts.mapper.action.prefix.enabled" value="true" />
+     
+    <package name="main" namespace="/"  extends="json-default,struts-default">   
+    
+		<!-- 
+			Declare our interceptors
+		 -->
+		<interceptors>		
+			<!-- Declare the login interceptor -->
+			<interceptor name="login" class="net.project.web.interceptors.LoginInterceptor"/>
+			
+			<!-- 
+				Add the login interceptor to the default stack.	We want it first, so that we can check if the user is
+				logged in before processing the action.
+			 -->
+			<interceptor-stack name="defaultLoginStack">
+				<interceptor-ref name="login"/>
+				<interceptor-ref name="defaultStack"/>
+			</interceptor-stack>
+		</interceptors>
+
+	<default-interceptor-ref name="defaultLoginStack"></default-interceptor-ref>
+	
+		<global-results>        	
+             <result name="login" type="redirectAction">
+            	<param name="actionName">displayLogin</param>
+            </result>
+            <result name="accessdenied" >/jsp/accessDenied.jsp</result>
+           <result name="error">/jsp/error404.jsp</result> 
+        </global-results>
+
+	<!--  ERRORS 
+    	<global-exception-mappings>			
+			<exception-mapping exception="java.lang.Throwable" result="error" />
+		</global-exception-mappings>-->   
+
+		<action name="displayLogin">  
+       	  <interceptor-ref name="defaultStack" />
+			<result name="success" >/jsp/login.jsp</result>
+		</action>
+		
+	<!-- Global action  -->
+		<action name="" >  
+			<result name="success" type="redirectAction">
+				<param name="actionName">${#application.callAction}</param>
+			</result>
+        </action>		
+		
+	<!-- LOGIN -->	
+		<action name="logOut" class="net.project.web.action.LoginAction" method="logout">  
+       	  <interceptor-ref name="defaultStack" />
+			<result name="success" type="redirectAction">
+				<param name="actionName">${#application.callAction}</param>
+			</result>
+        </action>		
+        
+        <action name="loginUser" class="net.project.web.action.LoginAction" method="login">  
+      	    <result name="loggedIn" type="redirectAction">
+            	<param name="actionName">mainPageAction</param>
+             </result>
+       	 	 <result name="login">/jsp/login.jsp</result>
+       	 	 <result name="resetPass">/jsp/login.jsp</result>
+        </action>   
+        
+         <action name="changepassword">  
+       	  <result name="success">/jsp/changePassword.jsp</result>
+        </action>
+        
+         
+        <action name="savepassword" class="net.project.web.action.LoginAction" method="changePass">
+          <interceptor-ref name="tokenSession"/>
+          <interceptor-ref name="defaultLoginStack"/>   
+       	  <result name="success">/jsp/changePassword.jsp</result>
+       	  <result name="input">/jsp/changePassword.jsp</result>
+       	  <result name="invalid.token">/jsp/changePassword.jsp</result>
+        </action>
+        
+        <!--  main page -->
+        <action name="mainPageAction" class="net.project.web.action.MainPageAction" method="loadMainPageInformation">  
+       	  <result name="success">/jsp/welcomePage.jsp</result>
+       	  <result name="error" type="redirectAction">
+            	<param name="actionName">displayLogin</param>
+             </result>
+        </action>
+        
+        <action name="loadCurrentDate" class="net.project.web.action.MainPageAction" method="dateAjax">  
+			<result name="success" type="stream">
+  				<param name="contentType">text/html</param>
+				 <param name="inputName">dateStream</param>
+				 <param name="bufferSize">1024</param>
+			</result>
+        </action>  
+
+        <action name="updateSideMenuDrpDown" class="net.project.web.action.MainPageAction" method="updateSideMenu" >          
+        </action>           
+        
+        <!-- User access and updates -->
+        <action name="addEditUser" class="net.project.web.action.UserAction" method="loadAddEditUser">            
+       	  <result name="success">/jsp/addEditUser.jsp</result>
+       	  <result name="input">/jsp/addEditUser.jsp</result>
+        </action>
+        
+        <action name="saveUser" class="net.project.web.action.UserAction" method="saveUserInformation"> 
+          <interceptor-ref name="tokenSession"/>
+          <interceptor-ref name="defaultLoginStack"/>   
+       	  <result name="success">/jsp/addEditUser.jsp</result>
+       	  <result name="input">/jsp/addEditUser.jsp</result>       	  
+       	  <result name="invalid.token">/jsp/addEditUser.jsp</result>
+        </action>
+        
+        <action name="userList" class="net.project.web.action.UserAction" method="loadAllUsers">  
+       	  <result name="success">/jsp/listUsers.jsp</result>
+       	  <result name="input">/jsp/listUsers.jsp</result>
+        </action>
+        
+        <action name="deleteUser" class="net.project.web.action.UserAction" method="deleteUser">  
+       	  <result name="success">/jsp/listUsers.jsp</result>
+       	  <result name="input">/jsp/listUsers.jsp</result>
+        </action>
+        <action name="blockUnBlockUser" class="net.project.web.action.UserAction" method="restoreDenyAccess">  
+       	  <result name="success">/jsp/listUsers.jsp</result>
+       	  <result name="input">/jsp/listUsers.jsp</result>
+        </action>
+        
+        <!--  gen key      -->
+        
+        <action name="genKey" class="net.project.web.action.UserAction" method="generateApiKey">  
+       	   <result name="success" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">apiKey</param>
+            </result>
+        </action>
+        
+        
+        <!-- logs -->
+        <action name="loadLogs" class="net.project.web.action.LogFileAction" method="loadLogs">  
+       	  <result name="success">/jsp/logsView.jsp</result>
+       	  <result name="input">/jsp/logsView.jsp</result>
+        </action>
+        
+        <action name="showLog" class="net.project.web.action.LogFileAction" method="showLogFile">  
+       	  <result name="success">/jsp/logsView.jsp</result>
+       	  <result name="input">/jsp/logsView.jsp</result>
+        </action>       
+        
+        
+       <!--  File Download -->
+       <action name="retrieveFile" class="net.project.web.action.FolderAction" method="fileDownload">		
+		<result name="success" type="stream">
+			<param name="contentType">application/octet-stream</param>
+	  		<param name="inputName">fileInputStream</param>
+	  		<param name="contentDisposition">attachment;filename="${fileNameToDownload}"</param>
+	  		<param name="bufferSize">1024</param>
+		</result>
+		<result  name="input">/jsp/welcomePage.jsp</result>
+		</action>	 
+       
+       <action name="displayAddFolderPage" class="net.project.web.action.FolderAction" method="loadDirectoriesForUser">  
+       	  <result name="success">/jsp/storagePage.jsp</result>
+       	  <result name="input">/jsp/storagePage.jsp</result>
+        </action> 
+        
+        <action name="manageFolders" class="net.project.web.action.FolderAction" method="manageFolderActions">  
+       	  <result name="success">/jsp/storagePage.jsp</result>
+       	  <result name="input">/jsp/storagePage.jsp</result>
+       	   <result name="toShare">/jsp/shareFolders.jsp</result>
+        </action> 
+        
+        <action name="viewFolder" class="net.project.web.action.FolderAction" method="loadFolderFiles">  
+       	  <result name="success">/jsp/storageFileList.jsp</result>
+       	  <result name="input">/jsp/storageFileList.jsp</result>
+        </action> 
+        
+        <action name="toUploadFilePage" class="net.project.web.action.FolderAction" method="uploadPage">  
+       	  <result name="success">/jsp/fileUpload.jsp</result>
+       	  <result name="input">/jsp/fileUpload.jsp</result>
+        </action>
+         
+        <action name="uploadFiles" class="net.project.web.action.FolderAction" method="uploadFilesToFolder">  
+       	  <result name="success" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">result</param>
+           </result>
+            <result name="error" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">errorUpl</param>
+           </result>
+       	  <result name="input">/jsp/fileUpload.jsp</result>
+        </action>
+        
+        <action name="checkFileExist" class="net.project.web.action.FolderAction" method="checkIfFileExist">  
+       	  <result name="success" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">result</param>
+           </result>
+            <result name="error" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">errorUpl</param>
+           </result>
+       	  <result name="input">/jsp/fileUpload.jsp</result>
+        </action>
+        <action name="updateFolder" class="net.project.web.action.FolderAction" method="updateUponSuccess">  
+       	  <result name="success" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">result</param>
+           </result>
+       	  <result name="input">/jsp/fileUpload.jsp</result>
+        </action>
+        
+      <action name="manageFiles" class="net.project.web.action.FolderAction" method="manageFilesActions">  
+       	  <result name="success">/jsp/storageFileList.jsp</result>
+       	  <result name="input">/jsp/storageFileList.jsp</result>
+       	  <result name="download" type="stream">
+			<param name="contentType">application/octet-stream</param>
+	  		<param name="inputName">fileInputStream</param>
+	  		<param name="contentDisposition">attachment;filename="${fileNameToDownload}"</param>
+	  		<param name="bufferSize">1024</param>
+		  </result>
+        </action>
+          
+         <action name="manageShares" class="net.project.web.action.FolderAction" method="manageSharesActions">  
+       	  <result name="success">/jsp/shareFolders.jsp</result>
+       	  <result name="input">/jsp/shareFolders.jsp</result>
+ 
+        </action> 
+       
+       <!--  weather -->
+      
+      <action name="displayCurrentWeather" class="net.project.web.action.WeatherAction" method="loadWeather">  
+       	  <result name="success">/jsp/weather.jsp</result>
+       	  <result name="input">/jsp/weather.jsp</result>
+        </action>
+        
+        <action name="loadAjaxCurrWeather" class="net.project.web.action.WeatherAction" method="loadWeatherFromEnvCan" >
+            <result name="success" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">wb</param>
+            </result>
+        </action>
+        
+        <action name="loadAjaxMainPageCurrWeather" class="net.project.web.action.MainPageAction" method="loadWeatherMainPage" >
+            <result name="success" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">weather</param>
+            </result>
+        </action>  
+        
+      
+      <!--  webservice -->
+      <action name="service" class="net.project.web.action.WebService" method="handleObject">  
+       	    <result name="ok" type="stream">
+  				<param name="contentType">text/html</param>
+				 <param name="inputName">jsonObjectStream</param>
+				 <param name="bufferSize">1024</param>
+			</result>
+             <result name="error" type="stream">
+  				<param name="contentType">text/html</param>
+				 <param name="inputName">jsonObjectStream</param>
+				 <param name="bufferSize">1024</param>
+			</result>
+            <result name="dwnJsonObj" type="stream">
+				<param name="contentType">application/octet-stream</param>
+		  		<param name="inputName">jsonObjectStream</param>
+		  		<param name="contentDisposition">attachment;filename="${jsonName}"</param>
+		  		<param name="bufferSize">1024</param>
+			</result>
+        </action>
+        
+        <!--  Configuration -->
+       <action name="loadEmailConfig" class="net.project.web.action.ServerOptionAction" method="loadEmailOptions" >
+            <result name="success">/jsp/emailConfig.jsp</result>
+       	  	<result name="input">/jsp/emailConfig.jsp</result>
+        </action> 
+        
+        <action name="manageEmailsAction" class="net.project.web.action.ServerOptionAction" method="handleEmailBtn" >
+            <result name="success">/jsp/emailConfig.jsp</result>
+       	  	<result name="input">/jsp/emailConfig.jsp</result>
+        </action> 
+        
+         <action name="loadUserTask" class="net.project.web.action.TaskAction" method="loadAllTasks" >
+            <result name="success">/jsp/task.jsp</result>
+       	  	<result name="input">/jsp/task.jsp</result>
+        </action> 
+        
+        <action name="tasks" class="net.project.web.action.TaskAction" method="manageTasks" >
+            <result name="success">/jsp/task.jsp</result>
+       	  	<result name="input">/jsp/task.jsp</result>
+        </action> 
+        
+         <action name="loadAjaxTaskById" class="net.project.web.action.TaskAction" method="loadTask" >
+            <result name="success" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">task</param>
+            </result>
+        </action> 
+        <action name="toggleUpdateCompleted" class="net.project.web.action.TaskAction" method="toggleTaskForCompleted" >
+            <result name="success" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">updateSuccess</param>
+            </result>
+        </action> 
+        <action name="toggleUpdComplForSubTask" class="net.project.web.action.TaskAction" method="toggleSubTaskForCompleted" >
+            <result name="success" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">updateSuccess</param>
+            </result>
+        </action> 
+        
+        <!-- Inventory -->
+        
+         <action name="loadAllInvGroup" class="net.project.web.action.InventoryAction" method="loadAllInventory" >  
+       	  <result name="success">/jsp/InventoryList.jsp</result>
+       	  <result name="input">/jsp/InventoryList.jsp</result>
+        </action>
+        
+        
+        
+        <action name="loadUserGroup" class="net.project.web.action.InventoryAction" method="loadInventoryByGroup" >  
+       	  <result name="success">/jsp/InventoryList.jsp</result>
+       	  <result name="input">/jsp/InventoryList.jsp</result>
+        </action>
+        
+         <action name="addGroupToSideMenu" class="net.project.web.action.InventoryAction" method="addToSideMenu" >
+            <result name="success" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">ajaxGroup</param>
+            </result>
+            <result name="error" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">ajaxGroup</param>
+            </result>
+        </action>
+        
+        
+        <action name="addNewItem" class="net.project.web.action.InventoryAction" method="manageItems" >  
+        	<param name="addItem">true</param>
+       	  <result name="success">/jsp/InventoryManagement.jsp</result>
+       	  <result name="input">/jsp/InventoryManagement.jsp</result>
+        </action>
+        
+         <action name="editItem" class="net.project.web.action.InventoryAction" method="manageItems" >  
+        	<param name="addItem">false</param>
+       	  <result name="success">/jsp/InventoryManagement.jsp</result>
+       	  <result name="input">/jsp/InventoryManagement.jsp</result>
+        </action>
+        
+        <action name="itemManagement" class="net.project.web.action.InventoryAction" method="saveItem" >         
+        <interceptor-ref name="fileUpload">
+        	<param name="maximumSize">20000000</param> 
+       		<param name="allowedTypes">image/gif, image/jpeg, image/png, image/png</param>
+  	    </interceptor-ref>   
+  	    <interceptor-ref name="defaultLoginStack"/>     
+       	 <result name="success" type="redirectAction">
+            	<param name="actionName">loadUserGroup</param>
+            	<param name="groupId">%{groupId}</param>
+          </result>
+       	  <result name="input">/jsp/InventoryManagement.jsp</result>
+        </action>
+        
+        <action name="deleteItem" class="net.project.web.action.InventoryAction" method="deleteInventoryItem" >
+            <result name="success" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">ajaxItem</param>
+            </result>
+            <result name="error" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">ajaxItem</param>
+            </result>
+        </action>
+        
+        <action name="deleteGrp" class="net.project.web.action.InventoryAction" method="deleteGroup" >
+          <result name="success" type="redirectAction">
+            	<param name="actionName">mainPageAction</param>
+          </result>
+       	  <result name="input">/jsp/InventoryList.jsp</result>
+        </action>
+        
+        <action name="renameGroup" class="net.project.web.action.InventoryAction" method="renameInvGroup" >
+          <result name="success" type="redirectAction">
+            	<param name="actionName">loadUserGroup</param>
+            	<param name="groupId">%{groupId}</param>
+          </result>
+       	  <result name="input">/jsp/InventoryList.jsp</result>
+        </action>
+        
+       <!--  <action name="generateQR" class="net.project.web.action.InventoryAction" method="generateQrCodeImage" >
+            <result name="success" type="json">            
+            	<param name="noCache">true</param>
+            	<param name="root">ajaxQrCode</param>
+            </result>
+        </action> -->
+        
+        
+        
+       <!--  PROJECT  --> 
+      <action name="loadAllProjects" class="net.project.web.action.ProjectAction" method="loadAllUserProjects" >  
+        	<interceptor-ref name="defaultLoginStack"/>	
+		    <interceptor-ref name="store">
+				<param name="operationMode">NONE</param>
+			</interceptor-ref>			      
+       	  <result name="success">/jsp/projects.jsp</result>
+       	  <result name="input">/jsp/projects.jsp</result>
+        </action>
+        
+        <action name="viewProject" class="net.project.web.action.ProjectAction" method="loadProjectForView" >  
+       	  <result name="success">/jsp/viewProject.jsp</result>
+       	  <result name="input">/jsp/projects.jsp</result>
+        </action>
+        
+        
+        <action name="addProject"  >  
+       	  <result name="success">/jsp/addEditProject.jsp</result>
+       	  <result name="input">/jsp/addEditProject.jsp</result>
+        </action>
+        
+        <action name="saveProjectDetails" class="net.project.web.action.ProjectAction" method="saveProject" >  
+	        <interceptor-ref name="fileUpload">
+	        	<param name="maximumSize">20000000</param> 
+	  	    </interceptor-ref>   
+	  	    <interceptor-ref name="defaultLoginStack"/>  
+	  	    <result name="success" type="redirectAction">
+            	<param name="actionName">viewProject</param>
+            	<param name="viewProjectId">${project.id}</param>
+            </result>      
+       	  <result name="input">/jsp/addEditProject.jsp</result>
+       	 <!-- <result name="inputEdit"  type="redirectAction">
+       	  	 <param name="operationMode">RETRIEVE</param>
+       	 	 <param name="actionName">editProject</param>
+       	 	 <param name="viewProjectId">${project.id}</param>
+       	  </result> -->
+        </action>
+        
+        <action name="editProject" class="net.project.web.action.ProjectAction" method="checkIfCanEdit" >      	
+       	  <result name="success">/jsp/addEditProject.jsp</result>
+       	  <result name="input">/jsp/projects.jsp</result>
+        </action>
+        
+        <!--
+			Download button
+		 -->		
+		<action name="getFile" class="net.project.web.action.ProjectAction"	method="download">
+			<result name="success" type="stream">
+				  <param name="contentType">application/octet-stream</param>
+	  			<param name="inputName">fileDownloadStream</param>
+	  			<param name="contentDisposition">attachment;filename="${fileDownloadName}"</param>
+	  			<param name="bufferSize">1024</param>
+			</result>
+			<result name="input">/jsp/viewProject.jsp</result>
+		</action>	
+		
+         <action name="deleteProject" class="net.project.web.action.ProjectAction" method="delete" >  
+         	<interceptor-ref name="defaultLoginStack"/>	
+        	<interceptor-ref name="store">
+		       	<param name="operationMode">STORE</param>
+			</interceptor-ref>	    	
+       	  <result name="success"  type="redirectAction">
+       	  	 <param name="operationMode">RETRIEVE</param>
+       	 	 <param name="actionName">loadAllProjects</param>
+       	  </result>
+       	  <result name="input"  type="redirectAction">
+       	  	<param name="operationMode">RETRIEVE</param>
+       	 	 <param name="actionName">loadAllProjects</param>
+       	  </result>
+        </action>
+      
+      
+      
+      
+      
+      
+       <!--  TETSTSET -->
+       <action name="chart">  
+       	  <result name="success">/jsp/ch.jsp</result>
+        </action>
+        <action name="upl">  
+       	  <result name="success">/jsp/test.jsp</result>
+        </action>
+       
+        <action name="welcome">  
+       	  <result name="success">/jsp/welcomePage.jsp</result>
+        </action>
+     </package>
+  </struts> 
